@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DMN
 // @namespace    https://tampermonkey.net/
-// @version      2.1
+// @version      2.2
 // @description  kot
 // @match        https://*.tankionline.com/*
 // @updateURL    СЮДА_ПОТОМ_ВСТАВИМ_ССЫЛКУ
