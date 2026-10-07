@@ -1259,7 +1259,7 @@ var AYo6kZf,e6mxGM,FPw80r,esX8RD,NzULmZ,Gj0_x3,EfqGrDH,hHDKJR,JqeSC4,Cgp7qKG,Xcc
     // ------------------------------------------------------------
 
     const SOUND_ON = true;
-    const SOUND_VOLUME = 0.15;   // 0..1
+    const SOUND_VOLUME = 0.5;   // 0..1
     const FLASH_ON = true;
 
     // --- F8: прячет и панель, и значок D. Через класс на <html>, поэтому
@@ -1332,58 +1332,68 @@ var AYo6kZf,e6mxGM,FPw80r,esX8RD,NzULmZ,Gj0_x3,EfqGrDH,hHDKJR,JqeSC4,Cgp7qKG,Xcc
     // down = true: глубокий мягкий «thock» при нажатии,
     // down = false: тихий короткий «tick» при отпускании.
     function keySound(down) {
-        if (!SOUND_ON) {
-            return;
-        }
-
-        const c = getAudio();
-
-        if (!c) {
-            return;
-        }
-
-        const t = c.currentTime;
-        const rnd = 0.92 + Math.random() * 0.16;   // чуть разный тон каждый раз
-
-        const out = c.createGain();
-        const soft = c.createBiquadFilter();
-
-        out.gain.value = SOUND_VOLUME * (down ? 0.5 : 0.22);
-        soft.type = 'lowpass';
-        soft.frequency.value = 6000;
-        out.connect(soft);
-        soft.connect(c.destination);
-
-        // Щелчок свитча
-        const noise = c.createBufferSource();
-        const band = c.createBiquadFilter();
-        const noiseGain = c.createGain();
-
-        noise.buffer = getNoise(c);
-        band.type = 'bandpass';
-        band.frequency.value = (down ? 2200 : 3400) * rnd;
-        band.Q.value = 0.9;
-        noiseGain.gain.setValueAtTime(down ? 1 : 0.6, t);
-        noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-        noise.connect(band);
-        band.connect(noiseGain);
-        noiseGain.connect(out);
-        noise.start(t);
-
-        // Низкий «стук» корпуса
-        const osc = c.createOscillator();
-        const oscGain = c.createGain();
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime((down ? 210 : 300) * rnd, t);
-        osc.frequency.exponentialRampToValueAtTime((down ? 85 : 150) * rnd, t + 0.08);
-        oscGain.gain.setValueAtTime(down ? 1 : 0.35, t);
-        oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-        osc.connect(oscGain);
-        oscGain.connect(out);
-        osc.start(t);
-        osc.stop(t + 0.12);
+    if (!SOUND_ON || !down) {
+        return;
     }
+
+    const c = getAudio();
+
+    if (!c) {
+        return;
+    }
+
+    const t = c.currentTime;
+
+    const out = c.createGain();
+    const filter = c.createBiquadFilter();
+
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.exponentialRampToValueAtTime(SOUND_VOLUME * 0.32, t + 0.002);
+    out.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+
+    filter.type = 'highpass';
+    filter.frequency.value = 900;
+
+    out.connect(filter);
+    filter.connect(c.destination);
+
+    // Короткий механический щелчок
+    const noise = c.createBufferSource();
+    const noiseFilter = c.createBiquadFilter();
+    const noiseGain = c.createGain();
+
+    noise.buffer = getNoise(c);
+
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.value = 3200;
+    noiseFilter.Q.value = 1.4;
+
+    noiseGain.gain.setValueAtTime(0.9, t);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.035);
+
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(out);
+
+    noise.start(t);
+
+    // Очень короткий металлический "тик"
+    const osc = c.createOscillator();
+    const oscGain = c.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(1850, t);
+    osc.frequency.exponentialRampToValueAtTime(900, t + 0.025);
+
+    oscGain.gain.setValueAtTime(0.18, t);
+    oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.035);
+
+    osc.connect(oscGain);
+    oscGain.connect(out);
+
+    osc.start(t);
+    osc.stop(t + 0.04);
+}
 
     // --- Короткая вспышка при клике: один раз, бесконечной анимации нет.
     function clickFlash(button) {
