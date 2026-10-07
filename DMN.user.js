@@ -199,7 +199,7 @@ var AYo6kZf,e6mxGM,FPw80r,esX8RD,NzULmZ,Gj0_x3,EfqGrDH,hHDKJR,JqeSC4,Cgp7qKG,Xcc
     // ------------------------------------------------------------
 
     const FRAME_BG =
-        'linear-gradient(145deg, rgba(16,30,24,0.78), rgba(10,18,15,0.78))';
+    'linear-gradient(145deg, rgba(15,28,22,0.85), rgba(15,28,22,0.85))';
 
     const FRAME_BORDER = '1px solid rgba(' + BEIGE + ',0.55)';
 
@@ -1068,7 +1068,7 @@ var AYo6kZf,e6mxGM,FPw80r,esX8RD,NzULmZ,Gj0_x3,EfqGrDH,hHDKJR,JqeSC4,Cgp7qKG,Xcc
                 GLOW_BASE + ', ' +
                 'inset 0 -' + glow(4) + ' ' + glow(8) + ' rgba(' + BEIGE + ',0.10), ' +
                 DROP_SHADOW,
-            backdropFilter: 'blur(5px)',
+            backdropFilter: 'none',
             pointerEvents: 'auto',
             cursor: 'default'
         });
