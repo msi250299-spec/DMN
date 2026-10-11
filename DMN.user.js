@@ -12,7 +12,7 @@
 // @run-at       document-start
 // ==/UserScript==
 // ============================================================
-// 
+//
 // ============================================================
 
 
@@ -1054,6 +1054,31 @@ enemyHighlight: true, // подсветка врагов
     const hiddenWatched = {};
     let hiddenObserver = null;
 
+let manualClickUntil = 0;
+const lastClickerState = {};
+
+
+
+
+const crossedAudio = new Audio(
+    'https://raw.githubusercontent.com/msi250299-spec/DMN/main/crossed.mp3'
+);
+
+crossedAudio.preload = 'auto';
+
+function announceCrossed() {
+    crossedAudio.pause();
+    crossedAudio.currentTime = 0;
+
+    crossedAudio.play().catch(error => {
+        console.warn('Не удалось воспроизвести голос:', error);
+    });
+}
+
+
+
+
+
     function isHiddenActive(element) {
         const bg = (element.style.background || element.style.backgroundColor || '').replace(/\s+/g, '');
 
@@ -1081,6 +1106,21 @@ enemyHighlight: true, // подсветка врагов
 
             const element = document.getElementById(id);
             const on = !!element && isHiddenActive(element);
+
+const previous = lastClickerState[id];
+
+if (
+    previous === true &&
+    !on &&
+    Date.now() > manualClickUntil &&
+    !document.querySelector(BATTLE_SELECTOR) &&
+    document.querySelector('.IconStyle-iconAddBattle')
+) {
+    announceCrossed();
+}
+
+lastClickerState[id] = on;
+
 
             if (on !== lit.has(button)) {
                 if (on) {
@@ -1392,8 +1432,14 @@ enemyHighlight: true, // подсветка врагов
 
             button.addEventListener('mouseup', () => keySound(false));
 
-            button.addEventListener('click', (event) => {
-                action(button);
+
+button.addEventListener('click', (event) => {
+    if (label === 'ALPHA' || label === 'BRAVO') {
+        manualClickUntil = Date.now() + 1200;
+    }
+
+    action(button);
+
                 clickFlash(button);
                 event.stopPropagation();
             });
