@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DMN
 // @namespace    https://tampermonkey.net/
-// @version      3.0
+// @version      4.0
 // @description  kot
 // @match        https://*.tankionline.com/*
 // @updateURL    https://raw.githubusercontent.com/msi250299-spec/DMN/refs/heads/main/DMN.user.js
