@@ -1093,6 +1093,7 @@ function announceCrossed() {
     crossedAudio.play().catch(error => {
         console.warn('Не удалось воспроизвести голос:', error);
     });
+    console.log('announceCrossed вызвана');
 }
 
 
