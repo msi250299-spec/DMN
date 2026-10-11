@@ -1771,7 +1771,7 @@ toggle('Подсвечивать врагов', 'enemyHighlight', (enabled) => {
         const nickInput = document.createElement('input');
 
         nickInput.type = 'text';
-        nickInput.placeholder = 'Ник врага';
+        nickInput.placeholder = 'Ник';
         nickInput.maxLength = 40;
         nickInput.spellcheck = false;
         nickInput.autocomplete = 'off';
