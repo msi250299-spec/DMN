@@ -9,12 +9,45 @@
 // @icon         data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2064%2064%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%23f3f5f8%27%2F%3E%3Cstop%20offset%3D%27.5%27%20stop-color%3D%27%23f4cd7d%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%23aeb4bd%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Ccircle%20cx%3D%2732%27%20cy%3D%2732%27%20r%3D%2730%27%20fill%3D%27%230e1814%27%20stroke%3D%27%23e8d8b8%27%20stroke-width%3D%272%27%2F%3E%3Ctext%20x%3D%2732%27%20y%3D%2745%27%20text-anchor%3D%27middle%27%20font-family%3D%27Arial%27%20font-size%3D%2738%27%20font-weight%3D%27bold%27%20fill%3D%27url(%23g)%27%3ED%3C%2Ftext%3E%3C%2Fsvg%3E
 // @grant        unsafeWindow
 // @grant        GM_xmlhttpRequest
-// @grant        GM_xmlhttpRequest
 // @run-at       document-start
 // ==/UserScript==
-// ============================================================
-//
-// ============================================================
+let crossedAudio = null;
+
+GM_xmlhttpRequest({
+    method: 'GET',
+    url: 'https://raw.githubusercontent.com/msi250299-spec/DMN/main/crossed.mp3',
+    responseType: 'blob',
+
+    onload: function (response) {
+        if (response.status !== 200) {
+            console.error('DMN: ошибка загрузки звука', response.status);
+            return;
+        }
+
+        crossedAudio = new Audio(
+            URL.createObjectURL(response.response)
+        );
+        crossedAudio.preload = 'auto';
+        console.log('DMN: голос загружен');
+    },
+
+    onerror: function () {
+        console.error('DMN: не удалось скачать MP3');
+    }
+});
+
+function announceCrossed() {
+    if (!crossedAudio) {
+        console.warn('DMN: звук ещё не загружен');
+        return;
+    }
+
+    crossedAudio.pause();
+    crossedAudio.currentTime = 0;
+
+    crossedAudio.play().catch(console.error);
+}
+
 
 
 
