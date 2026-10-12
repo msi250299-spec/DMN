@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DMN
 // @namespace    https://tampermonkey.net/
-// @version      4.3
+// @version      4.4
 // @description  kot
 // @match        https://*.tankionline.com/*
 // @updateURL    https://raw.githubusercontent.com/msi250299-spec/DMN/refs/heads/main/DMN.user.js
@@ -2210,7 +2210,7 @@ var AYo6kZf,e6mxGM,FPw80r,esX8RD,NzULmZ,Gj0_x3,EfqGrDH,hHDKJR,JqeSC4,Cgp7qKG,Xcc
     }
 
     // ------------------------------------------------------------
-    // ВРАГИ: список ников и подсветка красным в меню битв
+    // ВРАГИ: список ников, подсветка красным и пункт в меню игрока
     // Список хранится в localStorage. Подсвечиваем только на экране со списком
     // битв (на странице есть <span>Список битв</span>), в самом бою не ищем.
     // Классы игры (ksc-...) меняются между версиями, поэтому ищем по тексту,
@@ -2269,7 +2269,9 @@ var AYo6kZf,e6mxGM,FPw80r,esX8RD,NzULmZ,Gj0_x3,EfqGrDH,hHDKJR,JqeSC4,Cgp7qKG,Xcc
     }
 
     function removeEnemy(nick) {
-        enemies = enemies.filter((item) => item !== nick);
+        const key = nick.toLowerCase();
+
+        enemies = enemies.filter((item) => item.toLowerCase() !== key);
         rebuildEnemySet();
         saveEnemies();
     }
@@ -2363,6 +2365,158 @@ var AYo6kZf,e6mxGM,FPw80r,esX8RD,NzULmZ,Gj0_x3,EfqGrDH,hHDKJR,JqeSC4,Cgp7qKG,Xcc
         }, 120);
     }
 
+    // ---------- Пункт «Добавить врага» / «Удалить врага» в меню игрока ----------
+    // Меню появляется после клика по нику. Берём ник из его шапки и добавляем
+    // последним пунктом копию обычного пункта игры (чтобы выглядел так же).
+    // Классы вида ksc-... меняются между версиями, поэтому опираемся только
+    // на ContextMenuStyle-..., а копию берём с уже существующего пункта.
+
+    const CONTEXT_MENU_SELECTOR = '.ContextMenuStyle-menu';
+    const CONTEXT_RANK_CLASS = 'ContextMenuStyle-menuItemRank';
+    const MENU_ITEM_ATTR = 'data-dmn-menu-item';
+    const LABEL_ADD_ENEMY = 'Добавить врага';
+    const LABEL_REMOVE_ENEMY = 'Удалить врага';
+
+    function menuNick(menu) {
+        const nameElement = menu.querySelector('.' + CONTEXT_RANK_CLASS + ' span');
+
+        return nameElement ? nickOf(nameElement.textContent) : '';
+    }
+
+    // Обычный пункт меню, с которого делаем копию: последний, не шапка и не наш.
+    function menuItemTemplate(menu) {
+        for (let i = menu.children.length - 1; i >= 0; i--) {
+            const child = menu.children[i];
+
+            if (
+                !child.classList.contains(CONTEXT_RANK_CLASS) &&
+                !child.hasAttribute(MENU_ITEM_ATTR) &&
+                child.querySelector('span')
+            ) {
+                return child;
+            }
+        }
+
+        return null;
+    }
+
+    // После нажатия меню должно закрыться. Сначала имитируем щелчок мимо меню,
+    // как это делает игрок. Если игра не закрыла меню сама, прячем его до
+    // тех пор, пока игра не покажет его заново (поменяются top / left).
+    function dismissContextMenu(menu) {
+        for (const type of ['mousedown', 'mouseup', 'click']) {
+            document.body.dispatchEvent(new MouseEvent(type, {
+                bubbles: true,
+                cancelable: true,
+                clientX: 1,
+                clientY: 1
+            }));
+        }
+
+        setTimeout(() => {
+            if (!menu.isConnected) {
+                return;
+            }
+
+            const top = menu.style.top;
+            const left = menu.style.left;
+
+            menu.style.display = 'none';
+
+            const watcher = new MutationObserver(() => {
+                if (!menu.isConnected || menu.style.top !== top || menu.style.left !== left) {
+                    menu.style.display = '';
+                    watcher.disconnect();
+                }
+            });
+
+            watcher.observe(menu, { attributes: true, attributeFilter: ['style'] });
+        }, 250);
+    }
+
+    function createEnemyMenuItem(menu) {
+        const template = menuItemTemplate(menu);
+
+        if (!template) {
+            return null;
+        }
+
+        const item = template.cloneNode(true);
+
+        item.setAttribute(MENU_ITEM_ATTR, '1');
+
+        item.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const nick = item.getAttribute('data-dmn-nick') || '';
+
+            if (!nick) {
+                return;
+            }
+
+            if (enemySet.has(nick.toLowerCase())) {
+                removeEnemy(nick);
+            } else {
+                addEnemy(nick);
+            }
+
+            scanEnemies();
+
+            if (settingsEl) {
+                refreshSettings();
+            }
+
+            keySound();
+            dismissContextMenu(menu);
+        });
+
+        return item;
+    }
+
+    function addEnemyMenuItem() {
+        const menu = document.querySelector(CONTEXT_MENU_SELECTOR);
+
+        if (!menu) {
+            return;
+        }
+
+        const nick = menuNick(menu);
+
+        if (!nick) {
+            return;
+        }
+
+        let item = menu.querySelector('[' + MENU_ITEM_ATTR + ']');
+
+        if (!item) {
+            item = createEnemyMenuItem(menu);
+
+            if (!item) {
+                return;
+            }
+
+            menu.appendChild(item);
+        }
+
+        // Меню могли открыть для другого игрока или список врагов изменился.
+        const label = item.querySelector('span');
+        const wanted = enemySet.has(nick.toLowerCase()) ? LABEL_REMOVE_ENEMY : LABEL_ADD_ENEMY;
+
+        if (item.getAttribute('data-dmn-nick') !== nick) {
+            item.setAttribute('data-dmn-nick', nick);
+        }
+
+        if (label && label.textContent !== wanted) {
+            label.textContent = wanted;
+        }
+    }
+
+    function onPageMutation() {
+        addEnemyMenuItem();
+        scheduleEnemyScan();
+    }
+
     function startEnemyWatcher() {
         const style = document.createElement('style');
 
@@ -2372,7 +2526,7 @@ var AYo6kZf,e6mxGM,FPw80r,esX8RD,NzULmZ,Gj0_x3,EfqGrDH,hHDKJR,JqeSC4,Cgp7qKG,Xcc
 
         (document.head || document.documentElement).appendChild(style);
 
-        new MutationObserver(scheduleEnemyScan).observe(document.body, {
+        new MutationObserver(onPageMutation).observe(document.body, {
             childList: true,
             subtree: true,
             characterData: true
