@@ -2219,7 +2219,7 @@ var AYo6kZf,e6mxGM,FPw80r,esX8RD,NzULmZ,Gj0_x3,EfqGrDH,hHDKJR,JqeSC4,Cgp7qKG,Xcc
 
     const ENEMIES_KEY = 'dmn-enemies-v1';
     const ENEMY_ATTR = 'data-dmn-enemy';
-    const LOBBY_MARK = 'Список битв';
+    const LOBBY_MARKS = ['Список битв', 'Battle List'];
     const CLAN_TAG = /^\s*\[[^\]]*\]\s*/;
 
     let enemies = [];
