@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DMN
 // @namespace    https://tampermonkey.net/
-// @version      4.5
+// @version      4.6
 // @description  kot
 // @match        https://*.tankionline.com/*
 // @updateURL    https://raw.githubusercontent.com/msi250299-spec/DMN/refs/heads/main/DMN.user.js
@@ -2314,10 +2314,10 @@ var AYo6kZf,e6mxGM,FPw80r,esX8RD,NzULmZ,Gj0_x3,EfqGrDH,hHDKJR,JqeSC4,Cgp7qKG,Xcc
 
             const text = content.trim();
 
-            if (text === LOBBY_MARK) {
-                lobby = true;
-                continue;
-            }
+           if (LOBBY_MARKS.some(mark => mark.toLowerCase() === text.toLowerCase())) {
+    lobby = true;
+    continue;
+}
 
             if (text.length > 70 || !enemySet.has(nickOf(text).toLowerCase())) {
                 continue;
